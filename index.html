@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Generator & Data Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .header h1 i {
+            font-size: 2rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .input-section {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e6eeff;
+            margin-bottom: 25px;
+        }
+        
+        .input-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e6eeff;
+        }
+        
+        .input-header i {
+            font-size: 1.8rem;
+            color: #6a11cb;
+        }
+        
+        .input-header h3 {
+            color: #333;
+            font-size: 1.4rem;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 15px 18px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.2);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            padding: 16px 25px;
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 200px;
+            letter-spacing: 0.5px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(37, 117, 252, 0.3);
+        }
+        
+        .action-btn:active {
+            transform: translateY(0);
+        }
+        
+        .action-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .secret-btn {
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+        }
+        
+        .tempmail-btn {
+            background: linear-gradient(to right, #FF416C, #FF4B2B);
+        }
+        
+        .mailcx-btn {
+            background: linear-gradient(to right, #20bf55, #01baef);
+        }
+        
+        .datatm-btn {
+            background: linear-gradient(to right, #8A2BE2, #4B0082);
+        }
+        
+        .password-star-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 12px 15px;
+            background: #fff;
+            border-radius: 10px;
+            border: 2px solid #e6eeff;
+        }
+        
+        .password-star-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .password-star-container label {
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .result-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .result-box {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e6eeff;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .result-box.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e6eeff;
+        }
+        
+        .result-header i {
+            font-size: 1.6rem;
+            color: #6a11cb;
+        }
+        
+        .result-header h4 {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .result-content {
+            margin-top: 15px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .otp-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #6a11cb;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .otp-label {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .otp-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .otp-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #6a11cb;
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+            background: #f8f9ff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 1px solid #6a11cb;
+            flex: 1;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .otp-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .copy-otp-btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 1.1rem;
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .copy-otp-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(37, 117, 252, 0.3);
+        }
+        
+        .mail-content {
+            font-size: 0.95rem;
+            color: #333;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            white-space: pre-wrap;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .code-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #20bf55;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .code-label {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .code-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .code-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #20bf55;
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+            background: #f0fff4;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 1px solid #20bf55;
+            flex: 1;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .code-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .copy-code-btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 1.1rem;
+            background: linear-gradient(to right, #20bf55, #01baef);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .copy-code-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(32, 191, 85, 0.3);
+        }
+        
+        .datatm-result-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #8A2BE2;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .datatm-label {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .datatm-display {
+            font-size: 1rem;
+            color: #333;
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #8A2BE2;
+            margin-bottom: 20px;
+            text-align: left;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        
+        .datatm-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .copy-datatm-btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 1.1rem;
+            background: linear-gradient(to right, #8A2BE2, #4B0082);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .copy-datatm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(138, 43, 226, 0.3);
+        }
+        
+        .hint-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+            padding-left: 5px;
+            line-height: 1.5;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 15px 0;
+            margin: 15px 0;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6a11cb;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            border-left: 5px solid #d32f2f;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .result-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-wrapper {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-btn {
+                width: 100%;
+                padding: 18px 20px;
+                font-size: 1.1rem;
+            }
+            
+            .otp-display, .code-display {
+                flex-direction: column;
+            }
+            
+            .otp-buttons, .code-buttons, .datatm-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-key"></i> OTP Generator & Data Manager</h1>
+            <p>আপনার সিক্রেট কী, মেইল অ্যাড্রেস বা Facebook ডেটা ইনপুট দিন এবং সংশ্লিষ্ট বাটনে ক্লিক করুন</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="input-header">
+                    <i class="fas fa-keyboard"></i>
+                    <h3>ইনপুট বক্স</h3>
+                </div>
+                
+                <div class="input-wrapper">
+                    <input type="text" id="user-input" placeholder="All Type Input Here" value="">
+                </div>
+                
+                <div class="hint-text">
+                    <p><strong></strong></p>
+                </div>
+                
+                <div class="password-star-container" id="password-star-container" style="display: none;">
+                    <input type="checkbox" id="password-star-checkbox">
+                    <label for="password-star-checkbox">Password with *</label>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn secret-btn" id="secret-btn">
+                        <i class="fas fa-lock"></i> Secret Key OTP
+                    </button>
+                    <button class="action-btn tempmail-btn" id="tempmail-btn">
+                        <i class="fas fa-envelope"></i> Temp Mail Check
+                    </button>
+                    <button class="action-btn mailcx-btn" id="mailcx-btn">
+                        <i class="fas fa-mail-bulk"></i> Mail CX Check
+                    </button>
+                    <button class="action-btn datatm-btn" id="datatm-btn">
+                        <i class="fas fa-database"></i> Data Transfer Manually
+                    </button>
+                </div>
+                
+                <div class="loading" id="main-loading">
+                    <div class="loading-spinner"></div>
+                    <p>প্রসেসিং...</p>
+                </div>
+                
+                <div class="error-message" id="main-error">
+                    <i class="fas fa-exclamation-triangle"></i> <span id="main-error-text"></span>
+                </div>
+            </div>
+            
+            <div class="result-sections">
+                <!-- Secret Key Result -->
+                <div class="result-box" id="secret-result">
+                    <div class="result-header">
+                        <i class="fas fa-lock"></i>
+                        <h4>Secret Key OTP Result</h4>
+                    </div>
+                    
+                    <div class="result-content">
+                        <div class="status success" id="secret-status">সফল</div>
+                        
+                        <div class="otp-section">
+                            <div class="otp-label">OTP (30 সেকেন্ডের জন্য বৈধ):</div>
+                            <div class="otp-display">
+                                <div class="otp-value" id="secret-otp-value">000000</div>
+                            </div>
+                            <div class="otp-buttons">
+                                <button class="copy-otp-btn" id="copy-secret-otp-btn">
+                                    <i class="far fa-copy"></i> OTP কপি করুন
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Temp Mail Result -->
+                <div class="result-box" id="tempmail-result">
+                    <div class="result-header">
+                        <i class="fas fa-envelope"></i>
+                        <h4>Temp Mail Result</h4>
+                    </div>
+                    
+                    <div class="result-content">
+                        <div class="status success" id="tempmail-status">সফল</div>
+                        
+                        <div class="mail-content-container">
+                            <div class="otp-label">ইমেইল কনটেন্ট:</div>
+                            <div class="mail-content" id="tempmail-content">
+                                No mail content yet
+                            </div>
+                        </div>
+                        
+                        <!-- Regular OTP Display for Temp Mail -->
+                        <div class="otp-section" id="tempmail-otp-section" style="display: none;">
+                            <div class="otp-label">এক্সট্রাক্ট করা OTP:</div>
+                            <div class="otp-display">
+                                <div class="otp-value" id="tempmail-otp">123456</div>
+                            </div>
+                            <div class="otp-buttons">
+                                <button class="copy-otp-btn" id="copy-tempmail-otp-btn">
+                                    <i class="far fa-copy"></i> OTP কপি করুন
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mail CX Result -->
+                <div class="result-box" id="mailcx-result">
+                    <div class="result-header">
+                        <i class="fas fa-mail-bulk"></i>
+                        <h4>Mail CX Result</h4>
+                    </div>
+                    
+                    <div class="result-content">
+                        <div class="status success" id="mailcx-status">সফল</div>
+                        
+                        <div class="mail-content-container">
+                            <div class="otp-label">ইমেইল কনটেন্ট:</div>
+                            <div class="mail-content" id="mailcx-content">
+                                No mail content yet
+                            </div>
+                        </div>
+                        
+                        <!-- Regular OTP Display for Mail CX -->
+                        <div class="otp-section" id="mailcx-otp-section" style="display: none;">
+                            <div class="otp-label">এক্সট্রাক্ট করা OTP:</div>
+                            <div class="otp-display">
+                                <div class="otp-value" id="mailcx-otp">123456</div>
+                            </div>
+                            <div class="otp-buttons">
+                                <button class="copy-otp-btn" id="copy-mailcx-otp-btn">
+                                    <i class="far fa-copy"></i> OTP কপি করুন
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Transfer Manually Result -->
+                <div class="result-box" id="datatm-result">
+                    <div class="result-header">
+                        <i class="fas fa-database"></i>
+                        <h4>Data Transfer Manually Result</h4>
+                    </div>
+                    
+                    <div class="result-content">
+                        <div class="status success" id="datatm-status">সফল</div>
+                        
+                        <div class="datatm-result-section">
+                            <div class="datatm-label">প্রক্রিয়াকৃত ডেটা:</div>
+                            <div class="datatm-display" id="datatm-result-data">
+                                No data processed yet
+                            </div>
+                            <div class="datatm-buttons">
+                                <button class="copy-datatm-btn" id="copy-datatm-btn">
+                                    <i class="far fa-copy"></i> ডেটা কপি করুন
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>এই ওয়েবসাইটটি OTP তৈরি, মেইল চেক এবং ডেটা ট্রান্সফারের জন্য | &copy; 2023 OTP Generator & Data Manager</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ========== Main Elements ==========
+            const userInput = document.getElementById('user-input');
+            const secretBtn = document.getElementById('secret-btn');
+            const tempmailBtn = document.getElementById('tempmail-btn');
+            const mailcxBtn = document.getElementById('mailcx-btn');
+            const datatmBtn = document.getElementById('datatm-btn');
+            const mainLoading = document.getElementById('main-loading');
+            const mainError = document.getElementById('main-error');
+            const mainErrorText = document.getElementById('main-error-text');
+            const passwordStarContainer = document.getElementById('password-star-container');
+            const passwordStarCheckbox = document.getElementById('password-star-checkbox');
+            
+            // ========== Result Elements ==========
+            const secretResult = document.getElementById('secret-result');
+            const secretOtpValue = document.getElementById('secret-otp-value');
+            const copySecretOtpBtn = document.getElementById('copy-secret-otp-btn');
+            const secretStatus = document.getElementById('secret-status');
+            
+            const tempmailResult = document.getElementById('tempmail-result');
+            const tempmailContent = document.getElementById('tempmail-content');
+            const tempmailOtp = document.getElementById('tempmail-otp');
+            const tempmailOtpSection = document.getElementById('tempmail-otp-section');
+            const copyTempMailOtpBtn = document.getElementById('copy-tempmail-otp-btn');
+            const tempmailStatus = document.getElementById('tempmail-status');
+            
+            const mailcxResult = document.getElementById('mailcx-result');
+            const mailcxContent = document.getElementById('mailcx-content');
+            const mailcxOtp = document.getElementById('mailcx-otp');
+            const mailcxOtpSection = document.getElementById('mailcx-otp-section');
+            const copyMailCxOtpBtn = document.getElementById('copy-mailcx-otp-btn');
+            const mailcxStatus = document.getElementById('mailcx-status');
+            
+            const datatmResult = document.getElementById('datatm-result');
+            const datatmResultData = document.getElementById('datatm-result-data');
+            const copyDatatmBtn = document.getElementById('copy-datatm-btn');
+            const datatmStatus = document.getElementById('datatm-status');
+            
+            // ========== Helper Functions ==========
+            function showError(message) {
+                mainErrorText.textContent = message;
+                mainError.style.display = 'block';
+                mainLoading.style.display = 'none';
+            }
+            
+            function hideError() {
+                mainError.style.display = 'none';
+            }
+            
+            function showLoading() {
+                mainLoading.style.display = 'block';
+                hideError();
+            }
+            
+            function hideLoading() {
+                mainLoading.style.display = 'none';
+            }
+            
+            function hideAllResults() {
+                secretResult.classList.remove('active');
+                tempmailResult.classList.remove('active');
+                mailcxResult.classList.remove('active');
+                datatmResult.classList.remove('active');
+            }
+            
+            function showResult(resultType) {
+                hideAllResults();
+                document.getElementById(`${resultType}-result`).classList.add('active');
+            }
+            
+            function clearInputBox() {
+                userInput.value = '';
+            }
+            
+            // Function to extract OTP from email content
+            function extractOtpFromEmail(content) {
+                const patterns = [
+                    /\b\d{6}\b/g,
+                    /\b\d{5}\b/g,
+                    /\b\d{4}\b/g,
+                    /code[:\s]*(\d{4,6})/gi,
+                    /verification[:\s]*(\d{4,6})/gi,
+                    /confirmation[:\s]*(\d{4,6})/gi,
+                    /security[:\s]*(\d{4,6})/gi,
+                    /is[:\s]*(\d{4,6})/gi,
+                    /your[:\s]*(\d{4,6})/gi,
+                    /OTP[:\s]*(\d{4,6})/gi,
+                    /password[:\s]*(\d{4,6})/gi
+                ];
+                
+                let foundOtps = [];
+                
+                for (const pattern of patterns) {
+                    const matches = content.match(pattern);
+                    if (matches) {
+                        matches.forEach(match => {
+                            const numMatch = match.match(/\d{4,6}/);
+                            if (numMatch) {
+                                foundOtps.push(numMatch[0]);
+                            }
+                        });
+                    }
+                }
+                
+                foundOtps = [...new Set(foundOtps)];
+                
+                if (foundOtps.length > 0) {
+                    foundOtps.sort((a, b) => b.length - a.length || b.localeCompare(a));
+                    return foundOtps[0];
+                }
+                
+                return null;
+            }
+            
+            // Copy to clipboard function
+            function copyToClipboard(text, button) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        const originalHtml = button.innerHTML;
+                        const originalBg = button.style.background;
+                        
+                        button.innerHTML = '<i class="fas fa-check"></i> কপি করা হয়েছে!';
+                        button.style.background = 'linear-gradient(to right, #20bf55, #01baef)';
+                        
+                        setTimeout(() => {
+                            button.innerHTML = originalHtml;
+                            button.style.background = originalBg;
+                        }, 2000);
+                    } else {
+                        throw new Error('কপি ব্যর্থ');
+                    }
+                } catch (err) {
+                    console.error('কপি করতে ব্যর্থ: ', err);
+                    alert('কপি করতে সমস্যা হচ্ছে। দয়া করে ম্যানুয়ালি কপি করুন: ' + text);
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+            }
+            
+            // ========== API Functions ==========
+            async function getOtpFromSecret(secret) {
+                const baseUrl = 'https://script.google.com/macros/s/AKfycbxN2j8hkKlEl5kgVxmAi9j4bo3JZ1jySpB8_5oV95YufFe_0g7ZtSgLmGIKBMKtZOld/exec';
+                const requestUrl = `${baseUrl}?secret=${encodeURIComponent(secret)}`;
+                
+                const response = await fetch(requestUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`সার্ভার রেসপন্স: ${response.status}`);
+                }
+                
+                return await response.json();
+            }
+            
+            async function getTempMailContent(email) {
+                const baseUrl = 'https://script.google.com/macros/s/AKfycbxUDnHHgSmgAJN75UaelYzwhIEoQALNiH_LoxvKhSxPiDhYwT1HeiuZMsQYqN8cJ9PKLQ/exec';
+                const requestUrl = `${baseUrl}?email=${encodeURIComponent(email)}`;
+                
+                const response = await fetch(requestUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`সার্ভার রেসপন্স: ${response.status}`);
+                }
+                
+                return await response.text();
+            }
+            
+            async function getMailCxContent(mailbox) {
+                const baseUrl = 'https://script.google.com/macros/s/AKfycbyGRn1FOmiv4eYJoJvam7N4M33hPKAFxAMu-1n7ySisUn5ddHN3iSm4mmBR7EX7ZIjW/exec';
+                const requestUrl = `${baseUrl}?mailbox=${encodeURIComponent(mailbox)}`;
+                
+                const response = await fetch(requestUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`সার্ভার রেসপন্স: ${response.status}`);
+                }
+                
+                return await response.text();
+            }
+            
+            async function sendDataToServer(data) {
+                const baseUrl = 'https://script.google.com/macros/s/AKfycbzGwD-90pi_jhToDjRKS_visRYoRdGS3H4qcf-DRpo3xZAIbfUNuF55XY3xTtKPzZr_0Q/exec';
+                
+                const response = await fetch(baseUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
+                    body: data
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`সার্ভার রেসপন্স: ${response.status}`);
+                }
+                
+                return await response.text();
+            }
+            
+            // ========== Main Action Handlers ==========
+            async function handleSecretKey() {
+                const secret = userInput.value.trim();
+                
+                if (!secret) {
+                    showError('দয়া করে একটি সিক্রেট কী ইনপুট দিন।');
+                    return;
+                }
+                
+                showLoading();
+                hideAllResults();
+                secretBtn.disabled = true;
+                tempmailBtn.disabled = true;
+                mailcxBtn.disabled = true;
+                datatmBtn.disabled = true;
+                passwordStarContainer.style.display = 'none';
+                
+                try {
+                    const data = await getOtpFromSecret(secret);
+                    
+                    hideLoading();
+                    
+                    if (data.status === true && data.otp) {
+                        secretOtpValue.textContent = data.otp;
+                        secretStatus.textContent = 'সফল';
+                        secretStatus.className = 'status success';
+                        showResult('secret');
+                        clearInputBox();
+                    } else {
+                        throw new Error('অপ্রত্যাশিত রেসপন্স ফরম্যাট');
+                    }
+                    
+                } catch (error) {
+                    hideLoading();
+                    showError(`OTP পাওয়া যায়নি: ${error.message}`);
+                    showResult('secret');
+                    secretStatus.textContent = 'ব্যর্থ';
+                    secretStatus.className = 'status error';
+                    secretOtpValue.textContent = 'XXXXXX';
+                    clearInputBox();
+                } finally {
+                    secretBtn.disabled = false;
+                    tempmailBtn.disabled = false;
+                    mailcxBtn.disabled = false;
+                    datatmBtn.disabled = false;
+                }
+            }
+            
+            async function handleTempMail() {
+                const email = userInput.value.trim();
+                
+                if (!email) {
+                    showError('দয়া করে একটি Temp Mail এড্রেস ইনপুট দিন।');
+                    return;
+                }
+                
+                showLoading();
+                hideAllResults();
+                secretBtn.disabled = true;
+                tempmailBtn.disabled = true;
+                mailcxBtn.disabled = true;
+                datatmBtn.disabled = true;
+                passwordStarContainer.style.display = 'none';
+                
+                try {
+                    const data = await getTempMailContent(email);
+                    
+                    hideLoading();
+                    
+                    tempmailContent.textContent = data;
+                    
+                    const extractedOtp = extractOtpFromEmail(data);
+                    
+                    if (extractedOtp) {
+                        tempmailOtp.textContent = extractedOtp;
+                        tempmailOtpSection.style.display = 'block';
+                        copyTempMailOtpBtn.style.display = 'flex';
+                        tempmailStatus.textContent = 'OTP পাওয়া গেছে';
+                        tempmailStatus.className = 'status success';
+                    } else {
+                        tempmailOtpSection.style.display = 'none';
+                        copyTempMailOtpBtn.style.display = 'none';
+                        tempmailStatus.textContent = 'OTP পাওয়া যায়নি';
+                        tempmailStatus.className = 'status error';
+                    }
+                    
+                    showResult('tempmail');
+                    clearInputBox();
+                    
+                } catch (error) {
+                    hideLoading();
+                    showError(`Temp Mail পাওয়া যায়নি: ${error.message}`);
+                    showResult('tempmail');
+                    tempmailStatus.textContent = 'ব্যর্থ';
+                    tempmailStatus.className = 'status error';
+                    tempmailContent.textContent = 'Error loading mail content';
+                    tempmailOtpSection.style.display = 'none';
+                    copyTempMailOtpBtn.style.display = 'none';
+                    clearInputBox();
+                } finally {
+                    secretBtn.disabled = false;
+                    tempmailBtn.disabled = false;
+                    mailcxBtn.disabled = false;
+                    datatmBtn.disabled = false;
+                }
+            }
+            
+            async function handleMailCx() {
+                const mailbox = userInput.value.trim();
+                
+                if (!mailbox) {
+                    showError('দয়া করে একটি Mail CX এড্রেস ইনপুট দিন।');
+                    return;
+                }
+                
+                showLoading();
+                hideAllResults();
+                secretBtn.disabled = true;
+                tempmailBtn.disabled = true;
+                mailcxBtn.disabled = true;
+                datatmBtn.disabled = true;
+                passwordStarContainer.style.display = 'none';
+                
+                try {
+                    const data = await getMailCxContent(mailbox);
+                    
+                    hideLoading();
+                    
+                    mailcxContent.textContent = data;
+                    
+                    const extractedOtp = extractOtpFromEmail(data);
+                    
+                    if (extractedOtp) {
+                        mailcxOtp.textContent = extractedOtp;
+                        mailcxOtpSection.style.display = 'block';
+                        copyMailCxOtpBtn.style.display = 'flex';
+                        mailcxStatus.textContent = 'OTP পাওয়া গেছে';
+                        mailcxStatus.className = 'status success';
+                    } else {
+                        mailcxOtpSection.style.display = 'none';
+                        copyMailCxOtpBtn.style.display = 'none';
+                        mailcxStatus.textContent = 'OTP পাওয়া যায়নি';
+                        mailcxStatus.className = 'status error';
+                    }
+                    
+                    showResult('mailcx');
+                    clearInputBox();
+                    
+                } catch (error) {
+                    hideLoading();
+                    showError(`Mail CX পাওয়া যায়নি: ${error.message}`);
+                    showResult('mailcx');
+                    mailcxStatus.textContent = 'ব্যর্থ';
+                    mailcxStatus.className = 'status error';
+                    mailcxContent.textContent = 'Error loading mail content';
+                    mailcxOtpSection.style.display = 'none';
+                    copyMailCxOtpBtn.style.display = 'none';
+                    clearInputBox();
+                } finally {
+                    secretBtn.disabled = false;
+                    tempmailBtn.disabled = false;
+                    mailcxBtn.disabled = false;
+                    datatmBtn.disabled = false;
+                }
+            }
+            
+            async function handleDataTransferManually() {
+                const inputData = userInput.value.trim();
+                
+                if (!inputData) {
+                    showError('দয়া করে Facebook ডেটা ইনপুট দিন।');
+                    return;
+                }
+                
+                // Show password with * checkbox for Data-T-M
+                passwordStarContainer.style.display = 'flex';
+                
+                showLoading();
+                hideAllResults();
+                secretBtn.disabled = true;
+                tempmailBtn.disabled = true;
+                mailcxBtn.disabled = true;
+                datatmBtn.disabled = true;
+                
+                try {
+                    // Prepare data (add * if checkbox is checked)
+                    let dataToSend = inputData;
+                    if (passwordStarCheckbox.checked) {
+                        dataToSend += ' *';
+                    }
+                    
+                    const result = await sendDataToServer(dataToSend);
+                    
+                    hideLoading();
+                    
+                    datatmResultData.textContent = result;
+                    datatmStatus.textContent = 'ডেটা সফলভাবে প্রেরিত হয়েছে';
+                    datatmStatus.className = 'status success';
+                    showResult('datatm');
+                    clearInputBox();
+                    
+                } catch (error) {
+                    hideLoading();
+                    showError(`ডেটা প্রেরণে ব্যর্থ: ${error.message}`);
+                    showResult('datatm');
+                    datatmStatus.textContent = 'ব্যর্থ';
+                    datatmStatus.className = 'status error';
+                    datatmResultData.textContent = 'Error processing data';
+                    clearInputBox();
+                } finally {
+                    secretBtn.disabled = false;
+                    tempmailBtn.disabled = false;
+                    mailcxBtn.disabled = false;
+                    datatmBtn.disabled = false;
+                }
+            }
+            
+            // ========== Event Listeners ==========
+            secretBtn.addEventListener('click', handleSecretKey);
+            tempmailBtn.addEventListener('click', handleTempMail);
+            mailcxBtn.addEventListener('click', handleMailCx);
+            datatmBtn.addEventListener('click', handleDataTransferManually);
+            
+            copySecretOtpBtn.addEventListener('click', () => {
+                copyToClipboard(secretOtpValue.textContent, copySecretOtpBtn);
+            });
+            
+            copyTempMailOtpBtn.addEventListener('click', () => {
+                copyToClipboard(tempmailOtp.textContent, copyTempMailOtpBtn);
+            });
+            
+            copyMailCxOtpBtn.addEventListener('click', () => {
+                copyToClipboard(mailcxOtp.textContent, copyMailCxOtpBtn);
+            });
+            
+            copyDatatmBtn.addEventListener('click', () => {
+                copyToClipboard(datatmResultData.textContent, copyDatatmBtn);
+            });
+            
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const input = userInput.value.trim();
+                    
+                    if (input.includes('@')) {
+                        const mailcxDomains = ['@end.tw', '@nqmo.com', '@qabq.com', '@uuf.me'];
+                        const isMailCx = mailcxDomains.some(domain => input.includes(domain));
+                        
+                        if (isMailCx) {
+                            handleMailCx();
+                        } else {
+                            handleTempMail();
+                        }
+                    } else if (input.includes('facebook.com') || input.includes('profile.php')) {
+                        handleDataTransferManually();
+                    } else {
+                        handleSecretKey();
+                    }
+                }
+            });
+            
+            // Show password star checkbox only for Data-T-M button
+            datatmBtn.addEventListener('click', function() {
+                passwordStarContainer.style.display = 'flex';
+            });
+            
+            // Hide password star checkbox for other buttons
+            secretBtn.addEventListener('click', function() {
+                passwordStarContainer.style.display = 'none';
+            });
+            
+            tempmailBtn.addEventListener('click', function() {
+                passwordStarContainer.style.display = 'none';
+            });
+            
+            mailcxBtn.addEventListener('click', function() {
+                passwordStarContainer.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
