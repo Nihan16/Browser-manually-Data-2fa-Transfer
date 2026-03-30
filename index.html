@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Data & 2FA Manager | OTP + Transfer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0b1120 0%, #111827 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        .glass-card {
+            max-width: 880px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0f2b3d 0%, #1a2a3f 100%);
+            padding: 2rem 2rem 1.8rem;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            letter-spacing: -0.2px;
+        }
+
+        .hero h1 i {
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .hero p {
+            margin-top: 10px;
+            opacity: 0.85;
+            font-size: 0.95rem;
+        }
+
+        .main-content {
+            padding: 2rem 2rem 2rem;
+        }
+
+        .input-panel {
+            background: #f9fafc;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            border: 1px solid #eef2f8;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.02);
+            margin-bottom: 1.8rem;
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .input-label i {
+            color: #2c3e66;
+            font-size: 1.3rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            font-size: 0.95rem;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1.2rem;
+            background: white;
+            resize: vertical;
+            transition: 0.2s;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b71ca;
+            box-shadow: 0 0 0 3px rgba(59, 113, 202, 0.15);
+        }
+
+        .btn-submit {
+            margin-top: 1.4rem;
+            width: 100%;
+            background: linear-gradient(98deg, #1e2f4e, #0f2b3d);
+            border: none;
+            padding: 1rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(98deg, #253c60, #123148);
+            box-shadow: 0 12px 20px -10px rgba(15, 52, 96, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.65;
+            transform: none;
+            cursor: not-allowed;
+            background: #94a3b8;
+        }
+
+        .info-hint {
+            background: #eef2ff;
+            border-radius: 1rem;
+            padding: 0.8rem 1rem;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #2c3e66;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .info-hint i {
+            margin-top: 2px;
+            font-size: 1rem;
+        }
+
+        .result-area {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            border: 1px solid #eef2f8;
+            overflow: hidden;
+            transition: 0.2s;
+            display: none;
+            animation: fadeSlideUp 0.3s ease-out;
+        }
+
+        .result-area.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            background: #f8fafd;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #eef2f8;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .result-header i {
+            font-size: 1.5rem;
+            color: #1f3a6b;
+        }
+
+        .result-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .result-body {
+            padding: 1.5rem;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #e6f7e6;
+            color: #0e6b2b;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .otp-card {
+            background: #fefdf5;
+            border: 1.5px solid #cfdfe8;
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .otp-label {
+            font-weight: 600;
+            color: #1f3a6b;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+        }
+
+        .otp-flex {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .otp-code {
+            background: white;
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
+            font-size: 1.7rem;
+            letter-spacing: 4px;
+            color: #0a2f44;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid #cbd5e1;
+            flex: 1;
+            text-align: center;
+            min-width: 180px;
+        }
+
+        .copy-btn {
+            background: #1e2f4e;
+            border: none;
+            color: white;
+            padding: 0.8rem 1.4rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .copy-btn:hover {
+            background: #2c3e66;
+            transform: scale(0.98);
+        }
+
+        .data-card {
+            background: #f4f9fe;
+            border: 1px solid #dceaf5;
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+        }
+
+        .data-label {
+            font-weight: 700;
+            color: #115e59;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .data-content {
+            background: #ffffff;
+            border-radius: 1rem;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 240px;
+            overflow-y: auto;
+            border: 1px solid #cbdde9;
+            margin-bottom: 1rem;
+            line-height: 1.45;
+        }
+
+        .loader-overlay {
+            display: none;
+            text-align: center;
+            padding: 1rem 0;
+            margin: 0.5rem 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #1e2f4e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 0.8rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-banner {
+            background: #fee9e6;
+            border-left: 5px solid #dc2626;
+            padding: 0.8rem 1rem;
+            border-radius: 1rem;
+            color: #991b1b;
+            font-weight: 500;
+            margin-top: 1rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.2rem;
+            background: #f9fafb;
+            border-top: 1px solid #eef2f8;
+            font-size: 0.75rem;
+            color: #4b5563;
+        }
+
+        @media (max-width: 620px) {
+            .main-content {
+                padding: 1.2rem;
+            }
+            .otp-code {
+                font-size: 1.3rem;
+                letter-spacing: 2px;
+            }
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="glass-card">
+    <div class="hero">
+        <h1><i class="fas fa-shield-hooded"></i> Data & 2FA Manager</h1>
+        <p>একসাথে OTP জেনারেট + ডেটা ট্রান্সফার | স্মার্ট অটো ডিটেক্ট</p>
+    </div>
+
+    <div class="main-content">
+        <div class="input-panel">
+            <div class="input-label">
+                <i class="fas fa-terminal"></i>
+                <span>ইনপুট (Secret / ডেটা / কম্বো)</span>
+            </div>
+            <textarea id="mainInput" rows="3" placeholder='উদাহরণ:
+Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKB
+
+অথবা
+Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=61576425514749+261343818606
+
+অথবা শুধু Facebook ডেটা'></textarea>
+            <button class="btn-submit" id="submitProcessBtn">
+                <i class="fas fa-arrow-right-to-bracket"></i> প্রসেস করুন
+            </button>
+            <div class="info-hint">
+                <i class="fas fa-lightbulb"></i>
+                <span>🔍 32-ক্যারেক্টার সিক্রেট পেলে → OTP দেখাবে। অতিরিক্ত ডেটা থাকলে OTP এর পরে ডেটা ট্রান্সফার হবে। শুধু ডেটা দিলে শুধু ট্রান্সফার।</span>
+            </div>
+            <div class="loader-overlay" id="globalLoader">
+                <div class="spinner"></div>
+                <p style="font-size: 0.85rem;">প্রসেস চলছে ...</p>
+            </div>
+            <div class="error-banner" id="globalError">
+                <i class="fas fa-circle-exclamation"></i>
+                <span id="errorMsg"></span>
+            </div>
+        </div>
+
+        <!-- unified result panel -->
+        <div class="result-area" id="resultPanel">
+            <div class="result-header">
+                <i class="fas fa-chart-simple"></i>
+                <h3>আউটপুট রেজাল্ট</h3>
+            </div>
+            <div class="result-body">
+                <div id="statusBadge" class="status-chip"><i class="fas fa-check-circle"></i> রেজাল্ট লোড হচ্ছে</div>
+                
+                <!-- OTP section (dynamic) -->
+                <div id="otpWrapper" style="display: none;">
+                    <div class="otp-card">
+                        <div class="otp-label"><i class="fas fa-key"></i> 🔐 টাইম-ভিত্তিক OTP (30 সেকেন্ড)</div>
+                        <div class="otp-flex">
+                            <div class="otp-code" id="otpCodeDisplay">------</div>
+                            <button class="copy-btn" id="copyOtpBtn"><i class="far fa-copy"></i> OTP কপি</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data transfer section -->
+                <div id="dataWrapper" style="display: none;">
+                    <div class="data-card">
+                        <div class="data-label"><i class="fas fa-database"></i> 📡 ডেটা ট্রান্সফার রেজাল্ট</div>
+                        <div class="data-content" id="dataTransferResult">—</div>
+                        <button class="copy-btn" id="copyDataBtn" style="background: #2b6e5c;"><i class="far fa-copy"></i> ডেটা রেসপন্স কপি</button>
+                    </div>
+                </div>
+                <div id="noActionMsg" style="text-align: center; padding: 1rem; color: gray; display: none;">
+                    ⚠️ কোনো বৈধ 2FA সিক্রেট বা ডেটা পাওয়া যায়নি
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <i class="fas fa-shield-alt"></i> নিরাপদ প্রক্রিয়াকরণ | OTP + ডেটা ট্রান্সফার
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ----- DOM elements -----
+        const inputTextarea = document.getElementById('mainInput');
+        const submitBtn = document.getElementById('submitProcessBtn');
+        const globalLoader = document.getElementById('globalLoader');
+        const globalErrorDiv = document.getElementById('globalError');
+        const errorMsgSpan = document.getElementById('errorMsg');
+        const resultPanel = document.getElementById('resultPanel');
+        const statusBadge = document.getElementById('statusBadge');
+        
+        const otpWrapper = document.getElementById('otpWrapper');
+        const otpCodeDisplay = document.getElementById('otpCodeDisplay');
+        const copyOtpBtn = document.getElementById('copyOtpBtn');
+        
+        const dataWrapper = document.getElementById('dataWrapper');
+        const dataTransferResultDiv = document.getElementById('dataTransferResult');
+        const copyDataBtn = document.getElementById('copyDataBtn');
+        
+        const noActionMsg = document.getElementById('noActionMsg');
+        
+        // ---------- helper utils ----------
+        function hideGlobalError() { globalErrorDiv.style.display = 'none'; errorMsgSpan.innerText = ''; }
+        function showGlobalError(msg) { errorMsgSpan.innerText = msg; globalErrorDiv.style.display = 'flex'; }
+        
+        function setLoading(isLoading) {
+            if(isLoading) {
+                globalLoader.style.display = 'block';
+                submitBtn.disabled = true;
+                hideGlobalError();
+                resultPanel.classList.remove('active');
+            } else {
+                globalLoader.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+        
+        function resetResultsUI() {
+            otpWrapper.style.display = 'none';
+            dataWrapper.style.display = 'none';
+            noActionMsg.style.display = 'none';
+            otpCodeDisplay.innerText = '------';
+            dataTransferResultDiv.innerText = '—';
+            statusBadge.innerHTML = '<i class="fas fa-info-circle"></i> ফলাফল তৈরি হচ্ছে';
+            statusBadge.className = 'status-chip';
+        }
+        
+        // copy to clipboard robust
+        function copyToClipboard(text, buttonElem, originalHTML) {
+            if(!text || text === '------' || text === '—') {
+                alert('কপি করার মতো বৈধ ডেটা নেই');
+                return;
+            }
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            let success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch(err) { console.warn(err); }
+            document.body.removeChild(textarea);
+            if(success) {
+                const originalContent = buttonElem.innerHTML;
+                buttonElem.innerHTML = '<i class="fas fa-check"></i> কপি হয়েছে!';
+                setTimeout(() => { buttonElem.innerHTML = originalContent; }, 1800);
+            } else {
+                alert('ম্যানুয়ালি কপি করুন: ' + text);
+            }
+        }
+        
+        // ----- Extract 2FA secret from input (prioritize 32 char base32 pattern)
+        function extract2FASecret(rawInput) {
+            let stripped = rawInput.replace(/\s+/g, '');
+            // 32-character Base32 typical: A-Z2-7
+            const base32Regex = /[A-Z2-7]{32}/;
+            let match32 = stripped.match(base32Regex);
+            if(match32) return match32[0];
+            // also check for 16 or 24 chars pattern fallback but original spec: we want exactly 32 chars from typical keys
+            // but if input contains spaces every 4 chars: e.g., "Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKB" -> no spaces version length 32
+            const spacedClean = rawInput.replace(/\s/g, '');
+            if(spacedClean.length === 32 && /^[A-Z2-7]{32}$/i.test(spacedClean.toUpperCase())) {
+                return spacedClean.toUpperCase();
+            }
+            // additional fallback: any continuous 32 alnum
+            const alnum32 = /[A-Za-z0-9]{32}/;
+            let alnumMatch = stripped.match(alnum32);
+            if(alnumMatch) return alnumMatch[0];
+            return null;
+        }
+        
+        // Extract data part that is NOT the 2FA secret (for transfer)
+        function extractDataPayload(fullInput, secretKey) {
+            if(!fullInput.trim()) return null;
+            if(!secretKey) {
+                // no secret found -> whole input is potential data
+                return fullInput.trim() || null;
+            }
+            // secret found: remove all occurrences of secret (case insensitive + spaces variations)
+            let processed = fullInput;
+            // replace secret ignoring case & spaces
+            const secretRegex = new RegExp(secretKey.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'gi');
+            processed = processed.replace(secretRegex, '');
+            // also remove any whitespace padding around
+            processed = processed.replace(/\s+/g, ' ').trim();
+            // additional cleanup if leftover starts with common glue
+            if(processed.length === 0) return null;
+            // If processed contains URL or data like facebook, phone, etc -> keep
+            // Special: if Facebook data present, we might automatically add * as per original? BUT original logic says if Facebook data exists, add ' *' at end BEFORE sending.
+            // But we will apply condition: if the payload contains 'facebook.com' or 'profile.php' we will add ' *' suffix before sending to server.
+            return processed;
+        }
+        
+        // ----- API Calls (Google Script endpoints)
+        // OTP endpoint
+        async function callOtpApi(secret) {
+            const otpBaseUrl = 'https://script.google.com/macros/s/AKfycbxN2j8hkKlEl5kgVxmAi9j4bo3JZ1jySpB8_5oV95YufFe_0g7ZtSgLmGIKBMKtZOld/exec';
+            const url = `${otpBaseUrl}?secret=${encodeURIComponent(secret)}`;
+            const response = await fetch(url);
+            if(!response.ok) throw new Error(`OTP server error (${response.status})`);
+            const json = await response.json();
+            if(json && json.status === true && json.otp) return json.otp;
+            throw new Error('OTP response invalid');
+        }
+        
+        // Data transfer endpoint (POST)
+        async function callDataTransferApi(payload) {
+            const transferUrl = 'https://script.google.com/macros/s/AKfycbzGwD-90pi_jhToDjRKS_visRYoRdGS3H4qcf-DRpo3xZAIbfUNuF55XY3xTtKPzZr_0Q/exec';
+            const response = await fetch(transferUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: payload
+            });
+            if(!response.ok) throw new Error(`Transfer error (${response.status})`);
+            return await response.text();
+        }
+        
+        // ----- Main processor (core logic)
+        async function processInput() {
+            const rawInput = inputTextarea.value;
+            if(!rawInput.trim()) {
+                showGlobalError('দয়া করে ইনপুট দিন। (2FA সিক্রেট বা ডেটা)');
+                return;
+            }
+            
+            setLoading(true);
+            resetResultsUI();
+            resultPanel.classList.remove('active');
+            
+            let otpValue = null;
+            let transferResponse = null;
+            let errorOtp = null;
+            let errorTransfer = null;
+            let secretFound = null;
+            let dataPayload = null;
+            
+            try {
+                // 1. Identify 2FA Secret (32 chars style)
+                const secret = extract2FASecret(rawInput);
+                secretFound = secret;
+                
+                // 2. Extract data to transfer (after removing secret)
+                let extractedData = extractDataPayload(rawInput, secret);
+                
+                // If no secret but extractedData still exists? Actually extractDataPayload without secret returns whole input if no secret.
+                // but we should treat as data transfer only
+                if(!secret && extractedData && extractedData.length > 0) {
+                    dataPayload = extractedData;
+                } else if(secret && extractedData && extractedData.length > 0) {
+                    dataPayload = extractedData;
+                } else if(secret && (!extractedData || extractedData.length === 0)) {
+                    dataPayload = null;
+                } else if(!secret && (!extractedData || extractedData.length === 0)) {
+                    dataPayload = null;
+                }
+                
+                // Additional: if Facebook data appears in raw input or payload, we add ' *' suffix (as original logic)
+                const hasFacebook = rawInput.match(/facebook\.com|profile\.php/i) || (dataPayload && dataPayload.match(/facebook\.com|profile\.php/i));
+                if(dataPayload && hasFacebook) {
+                    // avoid double asterisk
+                    if(!dataPayload.trim().endsWith('*')) {
+                        dataPayload = dataPayload + ' *';
+                    }
+                }
+                
+                // 3. Fetch OTP if secret exists
+                if(secret) {
+                    try {
+                        const otpResult = await callOtpApi(secret);
+                        otpValue = otpResult;
+                    } catch(otpErr) {
+                        errorOtp = otpErr.message;
+                        console.warn("OTP error", otpErr);
+                    }
+                }
+                
+                // 4. Transfer data if payload exists
+                if(dataPayload && dataPayload.length > 0) {
+                    try {
+                        transferResponse = await callDataTransferApi(dataPayload);
+                    } catch(transErr) {
+                        errorTransfer = transErr.message;
+                        console.warn("Transfer error", transErr);
+                    }
+                }
+                
+                // 5. Render UI based on results
+                resultPanel.classList.add('active');
+                
+                // update status badge
+                let statusMsg = '';
+                let statusClass = 'status-chip';
+                if(otpValue && transferResponse) {
+                    statusMsg = '✅ OTP জেনারেট & ডেটা ট্রান্সফার সফল';
+                    statusClass = 'status-chip';
+                    statusBadge.style.background = "#e0f2e9";
+                    statusBadge.style.color = "#0a5c2e";
+                } else if(otpValue && !transferResponse && dataPayload) {
+                    statusMsg = '⚠️ OTP সফল, কিন্তু ডেটা ট্রান্সফার ব্যর্থ';
+                    statusClass = 'status-chip';
+                    statusBadge.style.background = "#fff3e0";
+                    statusBadge.style.color = "#b45309";
+                } else if(otpValue && !dataPayload) {
+                    statusMsg = '🔑 শুধুমাত্র 2FA OTP জেনারেট করা হয়েছে (কোন ডেটা নেই)';
+                    statusClass = 'status-chip';
+                } else if(transferResponse && !otpValue && dataPayload) {
+                    statusMsg = '📀 ডেটা ট্রান্সফার সফল (2FA সিক্রেট পাওয়া যায়নি)';
+                    statusClass = 'status-chip';
+                } else if(!otpValue && !transferResponse && (secretFound || dataPayload)) {
+                    if(secretFound && errorOtp) statusMsg = `❌ OTP ব্যর্থ: ${errorOtp}`;
+                    else if(dataPayload && errorTransfer) statusMsg = `❌ ডেটা ট্রান্সফার ব্যর্থ: ${errorTransfer}`;
+                    else statusMsg = '⚠️ কোনো অপারেশন সম্পন্ন হয়নি';
+                } else {
+                    statusMsg = 'ℹ️ ইনপুটে বৈধ 2FA সিক্রেট বা ডেটা খুঁজে পাওয়া যায়নি';
+                    noActionMsg.style.display = 'block';
+                }
+                
+                statusBadge.innerHTML = `<i class="fas ${otpValue ? 'fa-check-circle' : 'fa-circle-exclamation'}"></i> ${statusMsg}`;
+                statusBadge.className = statusClass;
+                
+                // show OTP section if we have OTP value
+                if(otpValue) {
+                    otpCodeDisplay.innerText = otpValue;
+                    otpWrapper.style.display = 'block';
+                } else if(secretFound && errorOtp) {
+                    otpCodeDisplay.innerText = 'OTP লোড ব্যর্থ';
+                    otpWrapper.style.display = 'block';
+                } else {
+                    otpWrapper.style.display = 'none';
+                }
+                
+                // show data section if we have transfer response or attempted data transfer
+                if(transferResponse) {
+                    dataTransferResultDiv.innerText = transferResponse;
+                    dataWrapper.style.display = 'block';
+                } else if(dataPayload && errorTransfer) {
+                    dataTransferResultDiv.innerText = `ট্রান্সফার এরর: ${errorTransfer}`;
+                    dataWrapper.style.display = 'block';
+                } else if(dataPayload && !transferResponse && !errorTransfer) {
+                    // maybe pending? show info
+                    dataTransferResultDiv.innerText = 'ট্রান্সফার শুরু হয়নি (সার্ভার রেসপন্স নেই)';
+                    dataWrapper.style.display = 'block';
+                } else {
+                    dataWrapper.style.display = 'none';
+                }
+                
+                // If neither OTP nor data visible and noActionMsg not shown, check fallback
+                if(!otpValue && !transferResponse && !dataPayload && !secretFound) {
+                    noActionMsg.style.display = 'block';
+                } else {
+                    noActionMsg.style.display = 'none';
+                }
+                
+                // Clear input after successful processing? optional but makes ux clean: keep original requirement -> clear input
+                if(otpValue || transferResponse || (secretFound) || dataPayload) {
+                    inputTextarea.value = '';
+                }
+                
+            } catch (criticalErr) {
+                console.error(criticalErr);
+                showGlobalError(`প্রসেসিং ব্যর্থ: ${criticalErr.message}`);
+                resultPanel.classList.remove('active');
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        // --- copy handlers ---
+        copyOtpBtn.addEventListener('click', () => {
+            const otpText = otpCodeDisplay.innerText;
+            if(otpText && otpText !== '------' && otpText !== 'OTP লোড ব্যর্থ') {
+                copyToClipboard(otpText, copyOtpBtn, copyOtpBtn.innerHTML);
+            } else {
+                alert('কপি করার জন্য বৈধ OTP নেই');
+            }
+        });
+        
+        copyDataBtn.addEventListener('click', () => {
+            const dataText = dataTransferResultDiv.innerText;
+            if(dataText && dataText !== '—') {
+                copyToClipboard(dataText, copyDataBtn, copyDataBtn.innerHTML);
+            } else {
+                alert('কপি করার জন্য ডেটা নেই');
+            }
+        });
+        
+        submitBtn.addEventListener('click', processInput);
+        
+        // optional: allow Enter (Ctrl+Enter not to conflict, simple Enter on textarea triggers)
+        inputTextarea.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+                e.preventDefault();
+                processInput();
+            }
+        });
+        
+        // initial hide
+        resultPanel.classList.remove('active');
+        hideGlobalError();
+    })();
+</script>
+</body>
+</html>
