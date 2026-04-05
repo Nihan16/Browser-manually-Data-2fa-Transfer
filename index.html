@@ -88,27 +88,8 @@
             font-size: 1.3rem;
         }
 
-        textarea {
-            width: 100%;
-            padding: 1rem 1.2rem;
-            font-size: 0.95rem;
-            font-family: 'SF Mono', 'Courier New', monospace;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 1.2rem;
-            background: white;
-            resize: vertical;
-            transition: 0.2s;
-            line-height: 1.5;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: #3b71ca;
-            box-shadow: 0 0 0 3px rgba(59, 113, 202, 0.15);
-        }
-
+        /* NEW ORDER: Button comes BEFORE textarea */
         .btn-submit {
-            margin-top: 1.4rem;
             width: 100%;
             background: linear-gradient(98deg, #1e2f4e, #0f2b3d);
             border: none;
@@ -124,6 +105,7 @@
             cursor: pointer;
             transition: all 0.25s ease;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;  /* space between button and textarea */
         }
 
         .btn-submit:hover {
@@ -141,6 +123,26 @@
             transform: none;
             cursor: not-allowed;
             background: #94a3b8;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            font-size: 0.95rem;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1.2rem;
+            background: white;
+            resize: vertical;
+            transition: 0.2s;
+            line-height: 1.5;
+            margin-top: 0.2rem;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b71ca;
+            box-shadow: 0 0 0 3px rgba(59, 113, 202, 0.15);
         }
 
         .info-hint {
@@ -366,6 +368,10 @@
             .hero h1 {
                 font-size: 1.5rem;
             }
+            .btn-submit {
+                padding: 0.9rem;
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -382,16 +388,15 @@
                 <i class="fas fa-terminal"></i>
                 <span>ইনপুট (Secret / ডেটা / কম্বো)</span>
             </div>
-            <textarea id="mainInput" rows="3" placeholder='উদাহরণ:
-Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKB
-
-অথবা
-Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=61576425514749+261343818606
-
-অথবা শুধু Facebook ডেটা'></textarea>
+            
+            <!-- ✅ SUBMIT BUTTON IS NOW PLACED RIGHT AFTER LABEL, BEFORE TEXTAREA -->
             <button class="btn-submit" id="submitProcessBtn">
                 <i class="fas fa-arrow-right-to-bracket"></i> প্রসেস করুন
             </button>
+            
+            <!-- Textarea comes after button -->
+            <textarea id="mainInput" rows="3" placeholder='ডেটা সেন্ড করুন, না হয় 2Fa সিক্রেট থেকে OTP জেনারেট করুন।'></textarea>
+            
             <div class="info-hint">
                 <i class="fas fa-lightbulb"></i>
                 <span>🔍 32-ক্যারেক্টার সিক্রেট পেলে → OTP দেখাবে। অতিরিক্ত ডেটা থাকলে OTP এর পরে ডেটা ট্রান্সফার হবে। শুধু ডেটা দিলে শুধু ট্রান্সফার।</span>
@@ -494,10 +499,25 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
         
         // copy to clipboard robust
         function copyToClipboard(text, buttonElem, originalHTML) {
-            if(!text || text === '------' || text === '—') {
+            if(!text || text === '------' || text === '—' || text === 'OTP লোড ব্যর্থ') {
                 alert('কপি করার মতো বৈধ ডেটা নেই');
                 return;
             }
+            // Modern clipboard API fallback
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalContent = buttonElem.innerHTML;
+                    buttonElem.innerHTML = '<i class="fas fa-check"></i> কপি হয়েছে!';
+                    setTimeout(() => { buttonElem.innerHTML = originalContent; }, 1800);
+                }).catch(() => {
+                    fallbackCopy(text, buttonElem, originalHTML);
+                });
+            } else {
+                fallbackCopy(text, buttonElem, originalHTML);
+            }
+        }
+        
+        function fallbackCopy(text, buttonElem, originalHTML) {
             const textarea = document.createElement('textarea');
             textarea.value = text;
             document.body.appendChild(textarea);
@@ -545,21 +565,15 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
             }
             // secret found: remove all occurrences of secret (case insensitive + spaces variations)
             let processed = fullInput;
-            // replace secret ignoring case & spaces
             const secretRegex = new RegExp(secretKey.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'gi');
             processed = processed.replace(secretRegex, '');
             // also remove any whitespace padding around
             processed = processed.replace(/\s+/g, ' ').trim();
-            // additional cleanup if leftover starts with common glue
             if(processed.length === 0) return null;
-            // If processed contains URL or data like facebook, phone, etc -> keep
-            // Special: if Facebook data present, we might automatically add * as per original? BUT original logic says if Facebook data exists, add ' *' at end BEFORE sending.
-            // But we will apply condition: if the payload contains 'facebook.com' or 'profile.php' we will add ' *' suffix before sending to server.
             return processed;
         }
         
         // ----- API Calls (Google Script endpoints)
-        // OTP endpoint
         async function callOtpApi(secret) {
             const otpBaseUrl = 'https://script.google.com/macros/s/AKfycbxN2j8hkKlEl5kgVxmAi9j4bo3JZ1jySpB8_5oV95YufFe_0g7ZtSgLmGIKBMKtZOld/exec';
             const url = `${otpBaseUrl}?secret=${encodeURIComponent(secret)}`;
@@ -570,7 +584,6 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
             throw new Error('OTP response invalid');
         }
         
-        // Data transfer endpoint (POST)
         async function callDataTransferApi(payload) {
             const transferUrl = 'https://script.google.com/macros/s/AKfycbzGwD-90pi_jhToDjRKS_visRYoRdGS3H4qcf-DRpo3xZAIbfUNuF55XY3xTtKPzZr_0Q/exec';
             const response = await fetch(transferUrl, {
@@ -609,8 +622,6 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
                 // 2. Extract data to transfer (after removing secret)
                 let extractedData = extractDataPayload(rawInput, secret);
                 
-                // If no secret but extractedData still exists? Actually extractDataPayload without secret returns whole input if no secret.
-                // but we should treat as data transfer only
                 if(!secret && extractedData && extractedData.length > 0) {
                     dataPayload = extractedData;
                 } else if(secret && extractedData && extractedData.length > 0) {
@@ -621,10 +632,9 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
                     dataPayload = null;
                 }
                 
-                // Additional: if Facebook data appears in raw input or payload, we add ' *' suffix (as original logic)
+                // Facebook special logic: add ' *' suffix if Facebook data appears
                 const hasFacebook = rawInput.match(/facebook\.com|profile\.php/i) || (dataPayload && dataPayload.match(/facebook\.com|profile\.php/i));
                 if(dataPayload && hasFacebook) {
-                    // avoid double asterisk
                     if(!dataPayload.trim().endsWith('*')) {
                         dataPayload = dataPayload + ' *';
                     }
@@ -654,7 +664,6 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
                 // 5. Render UI based on results
                 resultPanel.classList.add('active');
                 
-                // update status badge
                 let statusMsg = '';
                 let statusClass = 'status-chip';
                 if(otpValue && transferResponse) {
@@ -685,7 +694,6 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
                 statusBadge.innerHTML = `<i class="fas ${otpValue ? 'fa-check-circle' : 'fa-circle-exclamation'}"></i> ${statusMsg}`;
                 statusBadge.className = statusClass;
                 
-                // show OTP section if we have OTP value
                 if(otpValue) {
                     otpCodeDisplay.innerText = otpValue;
                     otpWrapper.style.display = 'block';
@@ -696,7 +704,6 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
                     otpWrapper.style.display = 'none';
                 }
                 
-                // show data section if we have transfer response or attempted data transfer
                 if(transferResponse) {
                     dataTransferResultDiv.innerText = transferResponse;
                     dataWrapper.style.display = 'block';
@@ -704,21 +711,19 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
                     dataTransferResultDiv.innerText = `ট্রান্সফার এরর: ${errorTransfer}`;
                     dataWrapper.style.display = 'block';
                 } else if(dataPayload && !transferResponse && !errorTransfer) {
-                    // maybe pending? show info
                     dataTransferResultDiv.innerText = 'ট্রান্সফার শুরু হয়নি (সার্ভার রেসপন্স নেই)';
                     dataWrapper.style.display = 'block';
                 } else {
                     dataWrapper.style.display = 'none';
                 }
                 
-                // If neither OTP nor data visible and noActionMsg not shown, check fallback
                 if(!otpValue && !transferResponse && !dataPayload && !secretFound) {
                     noActionMsg.style.display = 'block';
                 } else {
                     noActionMsg.style.display = 'none';
                 }
                 
-                // Clear input after successful processing? optional but makes ux clean: keep original requirement -> clear input
+                // Clear input after processing for clean UX (as per original)
                 if(otpValue || transferResponse || (secretFound) || dataPayload) {
                     inputTextarea.value = '';
                 }
@@ -753,7 +758,7 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
         
         submitBtn.addEventListener('click', processInput);
         
-        // optional: allow Enter (Ctrl+Enter not to conflict, simple Enter on textarea triggers)
+        // Ctrl+Enter or Enter without shift to submit
         inputTextarea.addEventListener('keydown', (e) => {
             if(e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
                 e.preventDefault();
@@ -767,4 +772,4 @@ Q6D2 UKWN UAMF 5CYA O5E7 3AOG W3WE SJKBhttps://www.facebook.com/profile.php?id=6
     })();
 </script>
 </body>
-</html>
+    </html>
