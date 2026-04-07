@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=yes">
+    <title>GAS Tool - Google Apps Script Manager</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: #a0a0a0;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+            display: inline-block;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #38a169, #2f855a);
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #d69e2e, #b7791f);
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #4a5568, #2d3748);
+        }
+
+        .response-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response-box.error {
+            border-left-color: #e53e3e;
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        .response-box.success {
+            border-left-color: #48bb78;
+        }
+
+        .response-box.warning {
+            border-left-color: #d69e2e;
+            background: rgba(214, 158, 46, 0.1);
+        }
+
+        .otp-section {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.2), rgba(56, 161, 105, 0.1));
+            border: 1px solid rgba(72, 187, 120, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .otp-code {
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 4px;
+            color: #48bb78;
+        }
+
+        .copy-btn {
+            padding: 8px 20px;
+            background: #48bb78;
+        }
+
+        .copy-btn.copied, .copy-all-btn.copied {
+            background: #38a169;
+            transform: scale(0.98);
+        }
+
+        .copy-all-btn {
+            background: linear-gradient(135deg, #4a5568, #2d3748);
+        }
+
+        .data-list {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .data-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .row-count {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+        }
+
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(128, 90, 213, 0.3);
+            border: 1px solid rgba(128, 90, 213, 0.5);
+            border-radius: 10px;
+            color: #b794f4;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .link-btn:hover {
+            background: rgba(128, 90, 213, 0.5);
+            color: white;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            animation: fadeInUp 0.3s ease;
+            pointer-events: none;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            .tab-btn { padding: 10px 12px; font-size: 0.85rem; }
+            .otp-code { font-size: 1.2rem; letter-spacing: 2px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 GAS Tool</h1>
+            <p>Google Apps Script Integration Manager</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="transfer">📤 Data Transfer</button>
+            <button class="tab-btn" data-tab="acolumn">📊 A Column Data</button>
+            <button class="tab-btn" data-tab="delete">🗑️ Row Delete</button>
+        </div>
+
+        <div id="transfer" class="tab-content active">
+            <div class="card">
+                <h2 class="card-title">📤 Data Transfer Mode</h2>
+                <button id="submitTransfer" style="width:100%;margin-bottom:16px;">Submit Data</button>
+                <textarea id="transferInput" rows="8" placeholder="Paste your data here...&#10;Example:&#10;https://www.facebook.com/profile.php?id=12345678901234&#10;ABCD EFGH IJKL MNOP QRST UVWX YZ12 3456&#10;user@example.com&#10;*"></textarea>
+                <div id="transferResponse"></div>
+            </div>
+        </div>
+
+        <div id="acolumn" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">📊 A Column Data</h2>
+                <div class="action-bar">
+                    <span class="row-count" id="rowCount">0 rows</span>
+                    <div style="display:flex;gap:8px;">
+                        <a href="https://check.fb.tools" target="_blank" class="link-btn">🔗 Open 2FA Checker</a>
+                        <button id="copyAllData" class="btn-secondary copy-all-btn" style="padding:8px 16px;">📋 Copy All</button>
+                        <button id="refreshData" class="btn-secondary" style="padding:8px 16px;">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div id="dataList" class="data-list"><div style="text-align:center;padding:40px;color:#666;">Loading data...</div></div>
+            </div>
+        </div>
+
+        <div id="delete" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">🗑️ Row Delete</h2>
+                <div style="margin-bottom:12px;font-size:0.85rem;color:#a0a0a0;">💡 Enter one value per line to delete rows.</div>
+                <textarea id="deleteInput" rows="6" placeholder="826282737&#10;383738383"></textarea>
+                <button id="submitDelete" class="btn-danger" style="width:100%;">🗑️ Delete Row(s)</button>
+                <button id="sheetDownloadBtn" class="btn-download" style="margin-top:12px;width:100%;">📥 Sheet Download (A, C, D → A, B, C)</button>
+                <button id="clearSheetBtn" class="btn-clear" style="margin-top:12px;width:100%;">⚠️ Clear Sheet (Delete All Data)</button>
+                <div id="deleteResponse"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzGwD-90pi_jhToDjRKS_visRYoRdGS3H4qcf-DRpo3xZAIbfUNuF55XY3xTtKPzZr_0Q/exec";
+
+        // Enhanced toast with better visibility
+        function showToast(message, isError = false) {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) existingToast.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? '#e53e3e' : '#2d3748';
+            toast.style.color = 'white';
+            toast.style.fontWeight = '500';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                if (toast && toast.parentNode) toast.remove();
+            }, 2800);
+        }
+
+        // MODERN CLIPBOARD COPY - FIXED with multiple fallbacks
+        async function copyToClipboard(text, buttonElement = null) {
+            if (!text || text.length === 0) {
+                showToast('❌ Nothing to copy', true);
+                return false;
+            }
+            
+            // Method 1: Modern Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    if (buttonElement) {
+                        const originalText = buttonElement.textContent;
+                        buttonElement.textContent = '✓ Copied!';
+                        buttonElement.classList.add('copied');
+                        setTimeout(() => {
+                            buttonElement.textContent = originalText;
+                            buttonElement.classList.remove('copied');
+                        }, 2000);
+                    }
+                    showToast(`✅ Copied ${text.length > 40 ? text.substring(0, 40) + '...' : text}`, false);
+                    return true;
+                } catch (err) {
+                    console.warn('Clipboard API failed:', err);
+                }
+            }
+            
+            // Method 2: Fallback using textarea and execCommand
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                const success = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                if (success) {
+                    if (buttonElement) {
+                        const originalText = buttonElement.textContent;
+                        buttonElement.textContent = '✓ Copied!';
+                        buttonElement.classList.add('copied');
+                        setTimeout(() => {
+                            buttonElement.textContent = originalText;
+                            buttonElement.classList.remove('copied');
+                        }, 2000);
+                    }
+                    showToast(`✅ Copied to clipboard`, false);
+                    return true;
+                } else {
+                    throw new Error('execCommand returned false');
+                }
+            } catch (fallbackErr) {
+                console.error('Fallback copy failed:', fallbackErr);
+                showToast('❌ Copy failed. Please copy manually.', true);
+                return false;
+            }
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+                if (tabId === 'acolumn') loadAColumnData();
+            });
+        });
+
+        async function callGAS(params) {
+            const url = new URL(GAS_URL);
+            Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+            const res = await fetch(url.toString(), { method: 'GET', mode: 'cors' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.text();
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ========== DATA TRANSFER with FIXED OTP COPY ==========
+        const transferInput = document.getElementById('transferInput');
+        const submitTransferBtn = document.getElementById('submitTransfer');
+        const transferResponseDiv = document.getElementById('transferResponse');
+
+        async function submitTransfer() {
+            let input = transferInput.value.trim();
+            if (!input) {
+                transferResponseDiv.innerHTML = `<div class="response-box error">❌ Please enter data.</div>`;
+                showToast('❌ Please enter data first', true);
+                return;
+            }
+            if (!input.endsWith('*')) input += '*';
+            submitTransferBtn.disabled = true;
+            submitTransferBtn.innerHTML = '<span class="loading"></span> Sending...';
+            transferResponseDiv.innerHTML = '<div class="response-box">⏳ Processing...</div>';
+            try {
+                const result = await callGAS({ transfer: input });
+                const otpMatch = result.match(/🔢 OTP:\s*(\d{6})/);
+                const otp = otpMatch ? otpMatch[1] : null;
+                
+                let otpHtml = '';
+                if (otp) {
+                    const uniqueId = 'copyOtpBtn_' + Date.now();
+                    otpHtml = `<div class="otp-section" id="otpSection_${uniqueId}">
+                        <span>🔢 OTP:</span>
+                        <span class="otp-code" id="otpCode_${uniqueId}">${otp}</span>
+                        <button class="copy-btn" id="${uniqueId}">📋 Copy OTP</button>
+                    </div>`;
+                    transferResponseDiv.innerHTML = otpHtml + `<div class="response-box success">${escapeHtml(result)}</div>`;
+                    
+                    const otpCopyBtn = document.getElementById(uniqueId);
+                    if (otpCopyBtn) {
+                        otpCopyBtn.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const otpCodeSpan = document.getElementById(`otpCode_${uniqueId}`);
+                            const otpCode = otpCodeSpan ? otpCodeSpan.innerText : otp;
+                            await copyToClipboard(otpCode, otpCopyBtn);
+                        });
+                    }
+                } else {
+                    transferResponseDiv.innerHTML = `<div class="response-box success">${escapeHtml(result)}</div>`;
+                }
+                
+                transferInput.value = '';
+                showToast('✅ Data submitted successfully!', false);
+            } catch (err) {
+                transferResponseDiv.innerHTML = `<div class="response-box error">❌ Error: ${escapeHtml(err.message)}</div>`;
+                showToast('❌ Submission failed: ' + err.message, true);
+            } finally {
+                submitTransferBtn.disabled = false;
+                submitTransferBtn.innerHTML = 'Submit Data';
+            }
+        }
+        submitTransferBtn.addEventListener('click', submitTransfer);
+
+        // ========== A COLUMN DATA with FIXED COPY ALL ==========
+        let currentData = [];
+        async function loadAColumnData() {
+            const dataListDiv = document.getElementById('dataList');
+            const rowCountSpan = document.getElementById('rowCount');
+            const copyBtn = document.getElementById('copyAllData');
+            dataListDiv.innerHTML = '<div style="text-align:center;padding:40px;"><span class="loading"></span> Loading...</div>';
+            if(copyBtn) copyBtn.disabled = true;
+            try {
+                const result = await callGAS({ acolumn: "data" });
+                let parsed;
+                try { 
+                    parsed = JSON.parse(result); 
+                    if (!Array.isArray(parsed)) parsed = [result]; 
+                }
+                catch { 
+                    parsed = result.split('\n').filter(l => l.trim()); 
+                }
+                currentData = parsed.filter(i => i && i.toString().trim());
+                if (!currentData.length) {
+                    dataListDiv.innerHTML = '<div style="text-align:center;padding:40px;">📭 No data found</div>';
+                    rowCountSpan.textContent = '0 rows';
+                    if(copyBtn) copyBtn.disabled = true;
+                } else {
+                    dataListDiv.innerHTML = currentData.map(i => `<div class="data-item">${escapeHtml(i.toString())}</div>`).join('');
+                    rowCountSpan.textContent = `${currentData.length} rows`;
+                    if(copyBtn) copyBtn.disabled = false;
+                }
+            } catch(err) {
+                dataListDiv.innerHTML = `<div style="padding:40px;color:#e53e3e;">❌ ${escapeHtml(err.message)}</div>`;
+                rowCountSpan.textContent = '0 rows';
+                if(copyBtn) copyBtn.disabled = true;
+                showToast('Failed to load data', true);
+            }
+        }
+        
+        // FIXED Copy All button with robust clipboard
+        const copyAllBtn = document.getElementById('copyAllData');
+        if (copyAllBtn) {
+            const newCopyAllBtn = copyAllBtn.cloneNode(true);
+            copyAllBtn.parentNode.replaceChild(newCopyAllBtn, copyAllBtn);
+            newCopyAllBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (currentData.length === 0) {
+                    showToast('❌ No data to copy', true);
+                    return;
+                }
+                const textToCopy = currentData.join('\n');
+                await copyToClipboard(textToCopy, newCopyAllBtn);
+            });
+        }
+        
+        const refreshBtn = document.getElementById('refreshData');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => { 
+                loadAColumnData(); 
+                showToast('🔄 Refreshing data...', false);
+            });
+        }
+
+        // ========== ROW DELETE ==========
+        const deleteInput = document.getElementById('deleteInput');
+        const submitDeleteBtn = document.getElementById('submitDelete');
+        const deleteResponseDiv = document.getElementById('deleteResponse');
+
+        async function submitDelete() {
+            const input = deleteInput.value.trim();
+            if (!input) {
+                deleteResponseDiv.innerHTML = `<div class="response-box error">❌ Enter values to delete.</div>`;
+                showToast('❌ Please enter values to delete', true);
+                return;
+            }
+            const lines = input.split('\n').map(l=>l.trim()).filter(l=>l);
+            if(!lines.length) return;
+            submitDeleteBtn.disabled = true;
+            submitDeleteBtn.innerHTML = '<span class="loading"></span> Deleting...';
+            deleteResponseDiv.innerHTML = '<div class="response-box">⏳ Deleting...</div>';
+            try {
+                const result = await callGAS({ deletevalues: lines.join(',') });
+                const success = result.includes('✅') || result.includes('deleted') || result.includes('success');
+                deleteResponseDiv.innerHTML = `<div class="response-box ${success ? 'success' : 'error'}">${escapeHtml(result)}</div>`;
+                if(success) {
+                    deleteInput.value = '';
+                    showToast(`✅ ${lines.length} row(s) deleted successfully!`, false);
+                    if(document.getElementById('acolumn').classList.contains('active')) loadAColumnData();
+                } else {
+                    showToast(`⚠️ Deletion completed with warnings`, false);
+                }
+            } catch(err) {
+                deleteResponseDiv.innerHTML = `<div class="response-box error">❌ ${escapeHtml(err.message)}</div>`;
+                showToast('❌ Delete failed: ' + err.message, true);
+            } finally {
+                submitDeleteBtn.disabled = false;
+                submitDeleteBtn.innerHTML = '🗑️ Delete Row(s)';
+            }
+        }
+        
+        if (submitDeleteBtn) {
+            const newDeleteBtn = submitDeleteBtn.cloneNode(true);
+            submitDeleteBtn.parentNode.replaceChild(newDeleteBtn, submitDeleteBtn);
+            newDeleteBtn.addEventListener('click', submitDelete);
+        }
+
+        // ========== CLEAR SHEET BUTTON ==========
+        const clearSheetBtn = document.getElementById('clearSheetBtn');
+        
+        async function clearSheet() {
+            if (!clearSheetBtn) return;
+            
+            // Show confirmation dialog
+            const confirmed = confirm("⚠️ WARNING: This will delete ALL data from the sheet!\n\nAre you absolutely sure you want to continue?\n\nThis action cannot be undone!");
+            
+            if (!confirmed) {
+                showToast('❌ Clear sheet cancelled', false);
+                return;
+            }
+            
+            clearSheetBtn.disabled = true;
+            const originalText = clearSheetBtn.innerHTML;
+            clearSheetBtn.innerHTML = '<span class="loading"></span> Clearing sheet...';
+            
+            if (deleteResponseDiv) {
+                deleteResponseDiv.innerHTML = '<div class="response-box">⏳ Sending clear request to server...</div>';
+            }
+            
+            try {
+                const result = await callGAS({ clearallsheet: "true" });
+                
+                // Try to parse as JSON
+                let responseData = result;
+                let isSuccess = false;
+                let prettyJson = '';
+                
+                try {
+                    const jsonData = JSON.parse(result);
+                    responseData = jsonData;
+                    prettyJson = JSON.stringify(jsonData, null, 2);
+                    isSuccess = jsonData.success === true || jsonData.status === 'success' || result.includes('success') || result.includes('cleared');
+                } catch(e) {
+                    // Not JSON, treat as plain text
+                    prettyJson = result;
+                    isSuccess = result.includes('✅') || result.includes('success') || result.includes('cleared') || result.includes('deleted');
+                }
+                
+                const responseClass = isSuccess ? 'success' : 'warning';
+                const icon = isSuccess ? '✅' : '⚠️';
+                
+                let responseHtml = `<div class="response-box ${responseClass}">
+                    <strong>${icon} Clear Sheet Response:</strong><br><br>
+                    <pre style="margin-top:10px;font-family:'Courier New',monospace;font-size:0.8rem;white-space:pre-wrap;word-break:break-word;">${escapeHtml(prettyJson)}</pre>
+                </div>`;
+                
+                if (deleteResponseDiv) {
+                    deleteResponseDiv.innerHTML = responseHtml;
+                }
+                
+                if (isSuccess) {
+                    showToast('✅ Sheet cleared successfully!', false);
+                    // Refresh A column data if that tab is active
+                    if (document.getElementById('acolumn').classList.contains('active')) {
+                        setTimeout(() => loadAColumnData(), 1000);
+                    }
+                } else {
+                    showToast('⚠️ Sheet clear completed with warnings', false);
+                }
+                
+            } catch(err) {
+                console.error('Clear sheet error:', err);
+                const errorHtml = `<div class="response-box error">
+                    <strong>❌ Clear Sheet Failed!</strong><br><br>
+                    Error: ${escapeHtml(err.message)}<br><br>
+                    <strong>Request URL:</strong> ${GAS_URL}?clearallsheet=true
+                </div>`;
+                if (deleteResponseDiv) {
+                    deleteResponseDiv.innerHTML = errorHtml;
+                }
+                showToast('❌ Failed to clear sheet: ' + err.message, true);
+            } finally {
+                clearSheetBtn.disabled = false;
+                clearSheetBtn.innerHTML = originalText;
+            }
+        }
+        
+        if (clearSheetBtn) {
+            clearSheetBtn.addEventListener('click', clearSheet);
+        }
+
+        // ========== SHEET DOWNLOAD ==========
+        const sheetDownloadBtn = document.getElementById('sheetDownloadBtn');
+
+        async function downloadSheetOnlyData() {
+            if(!sheetDownloadBtn) return;
+            sheetDownloadBtn.disabled = true;
+            const originalText = sheetDownloadBtn.innerHTML;
+            sheetDownloadBtn.innerHTML = '<span class="loading"></span> Fetching data...';
+
+            try {
+                const responseText = await callGAS({ acd: "column" });
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(responseText);
+                } catch(e) {
+                    throw new Error('Invalid JSON from server. Make sure GAS returns proper JSON format.');
+                }
+
+                const colA = jsonData.A || jsonData.a || [];
+                const colC = jsonData.B || jsonData.b || [];
+                const colD = jsonData.C || jsonData.c || [];
+                const fileName = jsonData.fileName || `data_export_${Date.now()}.xlsx`;
+
+                if(!Array.isArray(colA) || !Array.isArray(colC) || !Array.isArray(colD)) {
+                    throw new Error('JSON must have A, B, C arrays (A=Col A, B=Col C, C=Col D)');
+                }
+
+                const maxLen = Math.max(colA.length, colC.length, colD.length);
+                if(maxLen === 0) {
+                    showToast('⚠️ No data found in sheet', true);
+                    return;
+                }
+
+                const worksheetData = [];
+                for(let i = 0; i < maxLen; i++) {
+                    const valA = (i < colA.length && colA[i] != null) ? colA[i] : "";
+                    const valC = (i < colC.length && colC[i] != null) ? colC[i] : "";
+                    const valD = (i < colD.length && colD[i] != null) ? colD[i] : "";
+                    worksheetData.push([valA, valC, valD]);
+                }
+
+                const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                XLSX.writeFile(wb, fileName);
+
+                showToast(`✅ Downloaded ${maxLen} rows as "${fileName}"`);
+                if(deleteResponseDiv) {
+                    deleteResponseDiv.innerHTML = `<div class="response-box success">✅ Downloaded ${maxLen} rows successfully!<br>📄 ${fileName}</div>`;
+                    setTimeout(() => {
+                        if(deleteResponseDiv.innerHTML.includes("Downloaded")) deleteResponseDiv.innerHTML = '';
+                    }, 4000);
+                }
+            } catch(err) {
+                console.error(err);
+                showToast(`❌ Download failed: ${err.message}`, true);
+                if(deleteResponseDiv) {
+                    deleteResponseDiv.innerHTML = `<div class="response-box error">❌ Error: ${escapeHtml(err.message)}<br><br><strong>Expected JSON format from GAS:</strong><br>{ "A": ["row1A", "row2A"...], "B": ["row1C"...], "C": ["row1D"...], "fileName": "optional.xlsx" }<br>A=Column A, B=Column C, C=Column D</div>`;
+                }
+            } finally {
+                sheetDownloadBtn.disabled = false;
+                sheetDownloadBtn.innerHTML = originalText;
+            }
+        }
+
+        if (sheetDownloadBtn) {
+            sheetDownloadBtn.addEventListener('click', downloadSheetOnlyData);
+        }
+
+        // Initial load
+        loadAColumnData();
+
+        // Keyboard shortcuts
+        if (deleteInput) {
+            deleteInput.addEventListener('keydown', (e) => { 
+                if((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    submitDelete();
+                }
+            });
+        }
+        
+        if (transferInput) {
+            transferInput.addEventListener('keydown', (e) => { 
+                if((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    submitTransfer();
+                }
+            });
+        }
+        
+        // Double-click to load example
+        if (transferInput) {
+            transferInput.addEventListener('dblclick', () => {
+                if (!transferInput.value) {
+                    transferInput.value = `https://www.facebook.com/profile.php?id=12345678901234\nABCD EFGH IJKL MNOP QRST UVWX YZ12 3456\nuser@example.com`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
